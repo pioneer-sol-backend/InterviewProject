@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriAI - Crop Disease Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-upload {
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .file-upload.dragover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner.active {
+            display: block;
+        }
+
+        .spinner-circle {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .result-section.disease {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+        }
+
+        .result-section.disease.critical {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+        }
+
+        .result-section.disease.high {
+            background: #fff3cd;
+            border-left: 5px solid #fd7e14;
+        }
+
+        .result-section.weather {
+            background: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+        }
+
+        .result-section.plan {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+        }
+
+        .result-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge.critical {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge.high {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .badge.moderate {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge.low {
+            background: #28a745;
+            color: white;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .weather-day {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .weather-day .date {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .weather-day .temp {
+            font-size: 1.5rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .weather-day .rain {
+            color: #17a2b8;
+            font-size: 0.9rem;
+        }
+
+        .action-list {
+            list-style: none;
+        }
+
+        .action-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .action-item.urgent {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .action-item .date {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .action-item .task {
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .action-item .reasoning {
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        .action-item .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        .tag.chemical {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .tag.irrigation {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .tag.urgent-tag {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .warning-box {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .processing-time {
+            text-align: right;
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 AgriAI</h1>
+            <p>AI-Powered Crop Disease Detection & Action Planning</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="card" id="uploadCard">
+            <h2>📸 Upload Crop Image</h2>
+
+            <div class="form-group">
+                <div class="file-upload" id="dropZone">
+                    <div style="font-size: 3rem;">📷</div>
+                    <p><strong>Click to upload</strong> or drag and drop</p>
+                    <p style="font-size: 0.9rem; color: #999;">Supported: JPG, PNG, JFIF (max 10MB)</p>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+                <div class="preview" id="preview"></div>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label for="cropType">Crop Type</label>
+                    <select id="cropType">
+                        <option value="tomato">Tomato</option>
+                        <option value="corn" selected>Corn</option>
+                        <option value="potato">Potato</option>
+                        <option value="rice">Rice</option>
+                        <option value="wheat">Wheat</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="customCrop" style="visibility: hidden;" id="customLabel">Specify Crop</label>
+                    <input type="text" id="customCrop" placeholder="Enter crop name" style="display: none;">
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="form-group">
+                    <label for="lat">Latitude</label>
+                    <input type="number" id="lat" step="any" value="23.9" placeholder="e.g., 23.8103">
+                </div>
+
+                <div class="form-group">
+                    <label for="lon">Longitude</label>
+                    <input type="number" id="lon" step="any" value="90.25" placeholder="e.g., 90.4125">
+                </div>
+            </div>
+
+            <button class="btn" id="analyzeBtn" onclick="analyzeCrop()">
+                🔍 Analyze Crop
+            </button>
+
+            <div class="spinner" id="spinner">
+                <div class="spinner-circle"></div>
+                <p>Analyzing your crop...</p>
+                <p style="font-size: 0.9rem; color: #888;">This may take 10-30 seconds</p>
+            </div>
+
+            <div class="error" id="error" style="display: none;"></div>
+        </div>
+
+        <!-- Results -->
+        <div class="card results" id="resultsCard">
+            <h2>📊 Analysis Results</h2>
+
+            <div id="diseaseResult"></div>
+            <div id="weatherResult"></div>
+            <div id="planResult"></div>
+
+            <div class="processing-time" id="processingTime"></div>
+
+            <button class="btn" onclick="resetForm()" style="margin-top: 20px;">
+                🔄 Analyze Another Image
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                showError('File too large. Maximum size is 10MB.');
+                return;
+            }
+
+            selectedFile = file;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+
+            dropZone.innerHTML = `
+                <div style="font-size: 2rem;">✅</div>
+                <p><strong>${file.name}</strong></p>
+                <p style="font-size: 0.9rem; color: #999;">${(file.size / 1024).toFixed(1)} KB</p>
+            `;
+        }
+
+        // Custom crop type handling
+        document.getElementById('cropType').addEventListener('change', (e) => {
+            const customLabel = document.getElementById('customLabel');
+            const customCrop = document.getElementById('customCrop');
+
+            if (e.target.value === 'other') {
+                customLabel.style.visibility = 'visible';
+                customCrop.style.display = 'block';
+            } else {
+                customLabel.style.visibility = 'hidden';
+                customCrop.style.display = 'none';
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+
+        async function analyzeCrop() {
+            if (!selectedFile) {
+                showError('Please select an image first.');
+                return;
+            }
+
+            const cropType = document.getElementById('cropType').value === 'other'
+                ? document.getElementById('customCrop').value
+                : document.getElementById('cropType').value;
+
+            const lat = document.getElementById('lat').value;
+            const lon = document.getElementById('lon').value;
+
+            if (!cropType) {
+                showError('Please enter crop type.');
+                return;
+            }
+
+            document.getElementById('spinner').classList.add('active');
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('crop_type', cropType);
+                formData.append('lat', lat);
+                formData.append('lon', lon);
+
+                const response = await fetch('http://127.0.0.1:8000/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || error.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("API Response:", data); // Debug log
+                displayResults(data);
+
+            } catch (err) {
+                showError('Error: ' + err.message);
+                console.error(err);
+            } finally {
+                document.getElementById('spinner').classList.remove('active');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            console.log("Displaying results:", data); // Debug log
+
+            document.getElementById('uploadCard').style.display = 'none';
+            document.getElementById('resultsCard').classList.add('active');
+
+            // ========== DISEASE RESULT ==========
+            // API returns: data.detection (not data.image_analysis)
+            const detection = data.detection || {};
+            const confidence = detection.confidence || 0;
+            const severityClass = confidence > 0.9 ? 'critical' :
+                                 confidence > 0.7 ? 'high' : 'moderate';
+            const badgeClass = severityClass;
+
+            document.getElementById('diseaseResult').innerHTML = `
+                <div class="result-section disease ${severityClass}">
+                    <h3>
+                        🦠 Disease Detection
+                        <span class="badge ${badgeClass}">
+                            ${severityClass.toUpperCase()}
+                        </span>
+                    </h3>
+                    <p style="font-size: 1.2rem; margin-bottom: 10px;">
+                        <strong>${(detection.disease || 'Unknown').replace(/___/g, ' - ')}</strong>
+                    </p>
+                    <p>Confidence: ${detection.confidence_percent || (confidence * 100).toFixed(1) + '%'}</p>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${confidence * 100}%"></div>
+                    </div>
+                    ${detection.top_predictions && detection.top_predictions.length > 1 ? `
+                        <p style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                            Other possibilities: ${detection.top_predictions.slice(1, 3).map(p =>
+                                `${(p.label || 'Unknown').replace(/___/g, ' - ')} (${p.confidence_percent || (p.confidence * 100).toFixed(1) + '%'})`
+                            ).join(', ')}
+                        </p>
+                    ` : ''}
+                </div>
+            `;
+
+            // ========== WEATHER RESULT ==========
+            const weatherForecast = data.weather_forecast || [];
+            document.getElementById('weatherResult').innerHTML = `
+                <div class="result-section weather">
+                    <h3>🌤️ 5-Day Weather Forecast</h3>
+                    <div class="weather-grid">
+                        ${weatherForecast.map(day => `
+                            <div class="weather-day">
+                                <div class="date">${formatDate(day.date)}</div>
+                                <div class="temp">${day.temp_max || '--'}°C</div>
+                                <div style="font-size: 0.9rem; color: #666;">
+                                    ${day.temp_min || '--'}°C min
+                                </div>
+                                <div class="rain">💧 ${day.rain_chance || 0}% rain</div>
+                                <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">
+                                    Humidity: ${day.humidity || '--'}%
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // ========== ACTION PLAN ==========
+            const plan = data.action_plan || {};
+            const dailyActions = plan.daily_actions || [];
+            const warnings = plan.warnings || [];
+
+            document.getElementById('planResult').innerHTML = `
+                <div class="result-section plan">
+                    <h3>
+                        📋 5-Day Action Plan
+                        <span class="badge ${(plan.overall_risk || 'LOW').toLowerCase() === 'high' ? 'critical' :
+                                           (plan.overall_risk || 'LOW').toLowerCase() === 'moderate' ? 'moderate' : 'low'}">
+                            ${plan.overall_risk || 'LOW'} RISK
+                        </span>
+                    </h3>
+
+                    ${warnings.length > 0 ? `
+                        <div class="warning-box">
+                            <strong>⚠️ Warnings:</strong><br>
+                            ${warnings.join('<br>')}
+                        </div>
+                    ` : ''}
+
+                    <ul class="action-list">
+                        ${dailyActions.map(action => `
+                            <li class="action-item ${action.is_urgent ? 'urgent' : ''}">
+                                <div class="date">📅 ${formatDate(action.date)}</div>
+                                <div class="task"><strong>${action.task || 'No action'}</strong></div>
+                                <div class="reasoning">${action.reasoning || ''}</div>
+                                ${action.chemical_recommendation ? `
+                                    <span class="tag chemical">🧪 ${action.chemical_recommendation}</span>
+                                ` : ''}
+                                ${action.irrigation_adjustment ? `
+                                    <span class="tag irrigation">💧 ${action.irrigation_adjustment}</span>
+                                ` : ''}
+                                ${action.is_urgent ? `
+                                    <span class="tag urgent-tag">🔴 URGENT</span>
+                                ` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // Processing time
+            document.getElementById('processingTime').textContent =
+                `⏱️ Processed in ${data.processing_time_ms || '--'}ms | Model: ${data.model_used || 'Local'}`;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '--';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('uploadCard').style.display = 'block';
+            document.getElementById('resultsCard').classList.remove('active');
+
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('preview').innerHTML = '';
+            document.getElementById('dropZone').innerHTML = `
+                <div style="font-size: 3rem;">📷</div>
+                <p><strong>Click to upload</strong> or drag and drop</p>
+                <p style="font-size: 0.9rem; color: #999;">Supported: JPG, PNG, JFIF (max 10MB)</p>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            `;
+
+            const newFileInput = document.getElementById('fileInput');
+            newFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) handleFile(e.target.files[0]);
+            });
+        }
+    </script>
+</body>
+</html>
