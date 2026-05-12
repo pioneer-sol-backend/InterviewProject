@@ -1,0 +1,20 @@
+AgriAI - Quick Start Guide
+
+Step 1: Start the Server
+
+First of all, download the pycharm and Open the main.py file with pycharm.
+Secondly, click the run button to start the server.
+
+Step 2: Open HTML file
+
+Step 3. Upload any crop image
+
+Step 4. Put the name of the crop
+
+Step 5. Add longitude and latitude
+
+step 6. Press the "Analyze Crop" Button
+
+
+
+  
