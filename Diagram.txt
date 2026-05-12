@@ -1,0 +1,38 @@
+┌─────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                          │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  HTML/CSS/JS Frontend (index.html)                   │  │
+│  │  - Image upload (drag & drop)                        │  │
+│  │  - Crop type & location inputs                       │  │
+│  │  - Results display (disease, weather, action plan)     │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+└─────────────────────────┼───────────────────────────────────┘
+                          │ POST /analyze (multipart/form-data)
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      API LAYER (FastAPI)                     │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  FastAPI Application (main.py)                       │  │
+│  │  - CORS middleware enabled                         │  │
+│  │  - Request validation (UploadFile, Form data)        │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+└─────────────────────────┼───────────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+┌─────────────┐  ┌─────────────┐  ┌─────────────────┐
+│   IMAGE     │  │   WEATHER   │  │  RECOMMENDATION │
+│   SERVICE   │  │   SERVICE   │  │     ENGINE      │
+│  (Local)    │  │  (External) │  │  (External/Fallback) │
+└──────┬──────┘  └──────┬──────┘  └────────┬────────┘
+       │                │                  │
+       ▼                ▼                  ▼
+┌─────────────┐  ┌─────────────┐  ┌─────────────────┐
+│  HuggingFace│  │  OpenWeather│  │    OpenAI API   │
+│  Transformers│  │    API      │  │  GPT-4o-mini   │
+│  Model:     │  │  (Free Tier)│  │  (Vision + Text)│
+│  mobilenet_ │  │             │  │                 │
+│  v2_plant   │  │             │  │  OR Fallback:   │
+│  _disease   │  │             │  │  Rule-based     │
+│  (50MB)     │  │             │  │  recommendations│
+└─────────────┘  └─────────────┘  └─────────────────┘
